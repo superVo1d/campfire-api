@@ -2,7 +2,7 @@ install:
 	pip install -r requirements.txt
 
 start:
-	uvicorn app.main:app --host localhost --port 8000 --reload
+	uvicorn app.main:app --port 8000 --reload
 
 build:
 	docker compose build --no-cache
