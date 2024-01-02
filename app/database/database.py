@@ -1,9 +1,11 @@
+import datetime
 import os
 from typing import List, Union
 
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from app.models.matches import Matches
 from app.models.user import User, TelegramUser
 
 load_dotenv()
@@ -81,6 +83,25 @@ class MongoDB:
             return None
 
         return User(**result)
+
+    async def like(self, first_user_id: int, second_user_id: int) -> Union[bool, None]:
+        """Saves user`s like.
+
+         Args:
+            first_user_id: The user id.
+            second_user_id: The liked user id.
+
+        Returns:
+            bool: Is mutual.
+        """
+        await self.db.matches.insert_one(
+            Matches(first_user_id=first_user_id, second_user_id=second_user_id,
+                    created_at=datetime.datetime.now()).model_dump())
+
+        mutual_like = await self.db.matches.find_one(
+            {'$or': [{'first_user_id': second_user_id}, {'second_user_id': first_user_id}]})
+
+        return bool(mutual_like)
 
 
 database = MongoDB(uri=os.getenv('MONGODB_URI'), database=os.getenv('DATABASE_NAME'))
