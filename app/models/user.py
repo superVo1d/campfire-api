@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Literal, List
+from typing import Optional, List
 
 from pydantic import BaseModel, RootModel
 
@@ -10,6 +10,11 @@ class User(BaseModel):
     last_name: Optional[str] = None
     username: str
     telegram_photo: Optional[str] = None
+
+
+class UserWithLikes(User):
+    like: Optional[bool] = None
+    likesYou: Optional[bool] = None
 
 
 class UserResponse(BaseModel):
@@ -44,7 +49,8 @@ class UsersResponseItem(BaseModel):
     lastName: Optional[str] = None
     photo: Optional[str] = None
     nickname: str
-    match: Optional[Literal['you', 'your', 'mutual']] = None
+    like: Optional[bool] = None
+    likesYou: Optional[bool] = None
 
 
 class UsersResponse(RootModel):

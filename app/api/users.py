@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.get("", response_model=UsersResponse, response_description="Get all users except the current one")
 async def get_users(_user: Annotated[User, Depends(get_current_user)]):
-    _users = await database.all_users()
+    _users = await database.all_users(_user.user_id)
 
     users: UsersResponse = []
 
@@ -27,7 +27,8 @@ async def get_users(_user: Annotated[User, Depends(get_current_user)]):
             lastName=user.last_name,
             photo=user.telegram_photo,
             nickname=user.username,
-            match=None
+            like=user.like,
+            likesYou=user.likesYou
         ))
 
     return users

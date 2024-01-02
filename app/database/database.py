@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from app.models.matches import Matches
-from app.models.user import User, TelegramUser
+from app.models.user import User, TelegramUser, UserWithLikes
 
 load_dotenv()
 
@@ -23,23 +23,31 @@ class MongoDB:
         """Closes the database connection."""
         self.cluster.close()
 
-    async def all_users(self) -> List[User]:
+    async def all_users(self, user_id: int) -> List[UserWithLikes]:
         """Returns all users list.
 
         Returns:
             List[User]: Collection of User objects.
         """
-        _users = await self.db.users.find().to_list(length=None)
+        # _users = await self.db.users.find().each()().to_list(length=None)
 
         users: list[User] = []
 
-        for user in _users:
-            users.append(User(
-                user_id=user['user_id'],
-                first_name=user['first_name'],
-                last_name=user['last_name'],
-                username=user['username'],
-                telegram_photo=user['telegram_photo']
+        async for _user in self.db.users.find():
+            like = await self.db.matches.find_one({"first_user_id": user_id, "second_user_id": _user['user_id']})
+
+            likes_you = await self.db.matches.find_one({"first_user_id": _user['user_id'], "second_user_id": user_id})
+
+            print(_user['first_name'], bool(like))
+
+            users.append(UserWithLikes(
+                user_id=_user['user_id'],
+                first_name=_user['first_name'],
+                last_name=_user['last_name'],
+                username=_user['username'],
+                telegram_photo=_user['telegram_photo'],
+                like=bool(like),
+                likesYou=bool(likes_you)
             ))
 
         return users
