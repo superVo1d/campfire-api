@@ -92,19 +92,24 @@ class MongoDB:
 
         return User(**result)
 
-    async def like(self, first_user_id: int, second_user_id: int) -> Union[bool, None]:
-        """Saves user`s like.
+    async def like(self, first_user_id: int, second_user_id: int) -> bool:
+        """Toggles user`s like.
 
          Args:
             first_user_id: The user id.
             second_user_id: The liked user id.
 
         Returns:
-            bool: Is mutual.
+            bool: Like is mutual.
         """
-        await self.db.matches.insert_one(
-            Matches(first_user_id=first_user_id, second_user_id=second_user_id,
-                    created_at=datetime.datetime.now()).model_dump())
+        like = await self.db.matches.find_one({'first_user_id': first_user_id, 'second_user_id': second_user_id})
+
+        if like:
+            await self.db.matches.delete_many({'first_user_id': first_user_id, 'second_user_id': second_user_id})
+        else:
+            await self.db.matches.insert_one(
+                Matches(first_user_id=first_user_id, second_user_id=second_user_id,
+                        created_at=datetime.datetime.now()).model_dump())
 
         mutual_like = await self.db.matches.find_one(
             {'$or': [{'first_user_id': second_user_id}, {'second_user_id': first_user_id}]})
