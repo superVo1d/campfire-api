@@ -1,6 +1,6 @@
 import datetime
 import os
-from typing import List, Union
+from typing import List, Union, Optional
 
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -141,22 +141,21 @@ class MongoDB:
                 {"created_at": datetime.datetime.now(), "updated_at": datetime.datetime.now(),
                  "about": telegram_user_info.about, **_user})
 
-        # If there is start_param
-        if telegram_user.start_param:
-            # Check if hub exists
-            hub = await self.db.hubs.find_one({"hub_id": int(telegram_user.start_param)})
+        # Check if hub exists
+        hub = await self.db.hubs.find_one(
+            {"hub_id": int(telegram_user.start_param)}) if telegram_user.start_param else None
 
-            if hub:
-                hub_x_user = await self.db.hub_x_user.find_one({"hub_id": telegram_user.start_param})
+        if hub:
+            hub_x_user = await self.db.hub_x_user.find_one({"hub_id": telegram_user.start_param})
 
-                # If hub_x_user document doesn't exist create the one.
-                if not hub_x_user:
-                    await self.db.hub_x_user.insert_one(
-                        HubXUser(
-                            hub_id=int(telegram_user.start_param),
-                            user_id=telegram_user.id,
-                            created_at=datetime.datetime.now()
-                        ).model_dump())
+            # If hub_x_user document doesn't exist create the one.
+            if not hub_x_user:
+                await self.db.hub_x_user.insert_one(
+                    HubXUser(
+                        hub_id=int(telegram_user.start_param),
+                        user_id=telegram_user.id,
+                        created_at=datetime.datetime.now()
+                    ).model_dump())
 
         # If user's about is empty
         if not user.get('about'):
@@ -212,7 +211,7 @@ class MongoDB:
 
         return bool(mutual_like)
 
-    async def get_user_hub(self, user_id: int, hub_id: int) -> Union[Hub, None]:
+    async def get_user_hub(self, user_id: int, hub_id: Optional[int] = None) -> Union[Hub, None]:
         """Returns hub related to user.
 
         Args:
@@ -221,8 +220,13 @@ class MongoDB:
         Returns:
             Hub: The Hub object.
         """
+        
+        query = {"user_id": user_id}
 
-        hub_x_user = await self.db.hub_x_user.find_one({"user_id": user_id, "hub_id": hub_id})
+        if hub_id:
+            query["hub_id"] = hub_id
+
+        hub_x_user = await self.db.hub_x_user.find_one(query)
 
         if hub_x_user:
             _hub = await self.db.hubs.find_one({"hub_id": hub_x_user['hub_id']})

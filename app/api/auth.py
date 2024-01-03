@@ -42,13 +42,10 @@ async def get_user(user_id: int) -> Union[User, None]:
     return await database.get_user(user_id)
 
 
-async def get_user_hub(user_id: int, hub_id: int) -> Union[int, None]:
+async def get_user_hub(user_id: int, hub_id: Union[int, str, None]) -> Union[int, None]:
     hub = await database.get_user_hub(user_id, hub_id)
 
-    if hub:
-        return hub.hub_id
-    
-    return None
+    return hub.hub_id if hub else None
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserCurrent:
@@ -61,7 +58,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: int = int(payload.get("sub"))
-        hub_id: int = int(payload.get("hub"))
+        hub_id = payload.get("hub")
 
         if user_id is None:
             raise credentials_exception
@@ -72,6 +69,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
 
     user = await get_user(token_data.user_id)
     hub_id = await get_user_hub(token_data.user_id, token_data.hub_id)
+
+    print(hub_id)
 
     if user is None:
         raise credentials_exception

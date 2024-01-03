@@ -25,7 +25,12 @@ def verify_token(auth_cred: HTTPAuthorizationCredentials) -> TelegramUser:
     init_data = parse_init_data(init_data)
     user_data = parse_user_data(init_data["user"])
 
-    start_param = init_data.get("start_param")
+    start_param = None
+
+    try:
+        start_param = int(init_data.get("start_param"))
+    except:
+        pass
 
     return TelegramUser(start_param=start_param, **user_data)
 

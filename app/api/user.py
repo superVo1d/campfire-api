@@ -24,6 +24,6 @@ async def get_user(user: Annotated[UserCurrent, Depends(get_current_user)]):
         firstName=user.first_name,
         lastName=user.last_name,
         photo=user.telegram_photo,
-        hub=HubResponse(hubId=hub.hub_id, hubName=hub.hub_nm),
+        hub=HubResponse(hubId=hub.hub_id, hubName=hub.hub_nm) if hub else None,
         nickname=user.username
     )

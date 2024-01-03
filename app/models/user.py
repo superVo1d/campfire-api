@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from pydantic import BaseModel, RootModel
 
@@ -15,7 +15,7 @@ class User(BaseModel):
 
 
 class UserCurrent(User):
-    hub_id: int
+    hub_id: Optional[int] = None
 
 
 class UserWithLikes(User):
@@ -45,7 +45,7 @@ class TelegramUser(BaseModel):
     last_name: str
     username: str
     language_code: str
-    start_param: Optional[str] = None
+    start_param: Optional[Union[str, int]] = None
 
 
 class TelegramUserInfo(BaseModel):
