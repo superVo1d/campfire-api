@@ -4,14 +4,14 @@ from fastapi import APIRouter, Depends
 
 from app.api.auth import get_current_user
 from app.database.database import database
-from app.models.user import UsersResponse, UsersResponseItem, User
+from app.models.user import UsersResponse, UsersResponseItem, UserCurrent
 
 router = APIRouter()
 
 
 @router.get("", response_model=UsersResponse, response_description="Get all users except the current one")
-async def get_users(_user: Annotated[User, Depends(get_current_user)]):
-    _users = await database.all_users(_user.user_id)
+async def get_users(_user: Annotated[UserCurrent, Depends(get_current_user)]):
+    _users = await database.all_users(_user.user_id, _user.hub_id)
 
     users: UsersResponse = []
 

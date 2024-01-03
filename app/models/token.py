@@ -10,3 +10,4 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     user_id: Union[int, None] = None
+    hub_id: Union[int, None] = None

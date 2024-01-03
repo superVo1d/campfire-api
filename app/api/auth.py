@@ -7,9 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
+from app.bot.bot import bot
 from app.database.database import database
 from app.models.token import TokenData, Token
-from app.models.user import TelegramUser, User
+from app.models.user import TelegramUser, UserCurrent, User
 from app.utils.utils import get_telegram_user
 
 router = APIRouter()
@@ -37,11 +38,20 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
     return encoded_jwt
 
 
-async def get_user(user_id: int):
+async def get_user(user_id: int) -> Union[User, None]:
     return await database.get_user(user_id)
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
+async def get_user_hub(user_id: int, hub_id: int) -> Union[int, None]:
+    hub = await database.get_user_hub(user_id, hub_id)
+
+    if hub:
+        return hub.hub_id
+    
+    return None
+
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> UserCurrent:
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -51,29 +61,33 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: int = int(payload.get("sub"))
+        hub_id: int = int(payload.get("hub"))
 
         if user_id is None:
             raise credentials_exception
 
-        token_data = TokenData(user_id=user_id)
+        token_data = TokenData(user_id=user_id, hub_id=hub_id)
     except JWTError:
         raise credentials_exception
 
     user = await get_user(token_data.user_id)
+    hub_id = await get_user_hub(token_data.user_id, token_data.hub_id)
 
     if user is None:
         raise credentials_exception
 
-    return user
+    return UserCurrent(hub_id=hub_id, **user.model_dump())
 
 
 @router.post("", response_model=Token, response_description="Authenticate user")
 async def auth(telegram_user: TelegramUser = Depends(get_telegram_user)):
-    user = await database.update_or_create_user(telegram_user)
+    telegram_user_info = await bot.load_user_info(telegram_user.id)
+
+    user = await database.update_or_create_user(telegram_user, telegram_user_info)
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(user.user_id)}, expires_delta=access_token_expires
+        data={"sub": str(user.user_id), "hub": telegram_user.start_param}, expires_delta=access_token_expires
     )
 
     return Token(access_token=access_token, token_type="bearer")

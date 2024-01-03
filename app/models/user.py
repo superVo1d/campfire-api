@@ -3,6 +3,8 @@ from typing import Optional, List
 
 from pydantic import BaseModel, RootModel
 
+from app.models.hubs import HubResponse
+
 
 class User(BaseModel):
     user_id: int
@@ -10,6 +12,10 @@ class User(BaseModel):
     last_name: Optional[str] = None
     username: str
     telegram_photo: Optional[str] = None
+
+
+class UserCurrent(User):
+    hub_id: int
 
 
 class UserWithLikes(User):
@@ -24,7 +30,7 @@ class UserResponse(BaseModel):
     firstName: str
     lastName: Optional[str] = None
     photo: Optional[str] = None
-    hub: str
+    hub: Optional[HubResponse] = None
     nickname: str
 
 
@@ -39,6 +45,12 @@ class TelegramUser(BaseModel):
     last_name: str
     username: str
     language_code: str
+    start_param: Optional[str] = None
+
+
+class TelegramUserInfo(BaseModel):
+    about: Optional[str] = None
+    photo: Optional[str] = None
 
 
 class UsersResponseItem(BaseModel):

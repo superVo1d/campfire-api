@@ -25,7 +25,9 @@ def verify_token(auth_cred: HTTPAuthorizationCredentials) -> TelegramUser:
     init_data = parse_init_data(init_data)
     user_data = parse_user_data(init_data["user"])
 
-    return TelegramUser(**user_data)
+    start_param = init_data.get("start_param")
+
+    return TelegramUser(start_param=start_param, **user_data)
 
 
 telegram_authentication_schema = HTTPBearer()
