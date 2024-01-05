@@ -25,7 +25,7 @@ async def get_users(_user: Annotated[UserCurrent, Depends(get_current_user)]):
             age=None,
             firstName=user.first_name,
             lastName=user.last_name,
-            photo=user.telegram_photo,
+            photo=f'api/static/images/{user.telegram_photo}.jpg' if user.telegram_photo else None,
             nickname=user.username,
             like=user.like,
             likesYou=user.likesYou

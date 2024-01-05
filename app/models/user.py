@@ -25,7 +25,7 @@ class UserWithLikes(User):
 
 class UserResponse(BaseModel):
     id: int
-    about: str
+    about: Optional[str] = None
     age: Optional[int] = None
     firstName: str
     lastName: Optional[str] = None

@@ -23,7 +23,7 @@ async def get_user(user: Annotated[UserCurrent, Depends(get_current_user)]):
         age=None,
         firstName=user.first_name,
         lastName=user.last_name,
-        photo=user.telegram_photo,
+        photo=f'api/static/images/{telegram_user_info.photo}.jpg' if telegram_user_info.photo else None,
         hub=HubResponse(hubId=hub.hub_id, hubName=hub.hub_nm) if hub else None,
         nickname=user.username
     )

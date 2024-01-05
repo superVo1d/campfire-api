@@ -70,8 +70,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Use
     user = await get_user(token_data.user_id)
     hub_id = await get_user_hub(token_data.user_id, token_data.hub_id)
 
-    print(hub_id)
-
     if user is None:
         raise credentials_exception
 

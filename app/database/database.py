@@ -55,44 +55,29 @@ class MongoDB:
             {
                 "$lookup": {
                     "from": "matches",
-                    "let": {"user_id": "$user.user_id"},
+                    "localField": "user_id",
+                    "foreignField": "second_user_id",
+                    "as": "like",
                     "pipeline": [
-                        {
-                            "$match": {
-                                "$expr": {
-                                    "$and": [
-                                        {"first_user_id": user_id},
-                                        {"second_user_id": "$$user_id"}
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    "as": "like"
+                        {"$match": {"first_user_id": user_id}}
+                    ]
                 }
             },
             {
                 "$lookup": {
                     "from": "matches",
-                    "let": {"user_id": "$user.user_id"},
+                    "localField": "user_id",
+                    "foreignField": "first_user_id",
+                    "as": "likes_you",
                     "pipeline": [
-                        {
-                            "$match": {
-                                "$expr": {
-                                    "$and": [
-                                        {"first_user_id": "$$user_id"},
-                                        {"second_user_id": user_id}
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    "as": "likes_you"
+                        {"$match": {"second_user_id": user_id}}
+                    ]
                 }
             }
         ]
 
         async for result in self.db.hub_x_user.aggregate(pipeline):
+            print(result['like'])
             _user = result['user']
             like = result['like'][0] if result['like'] else None
             likes_you = result['likes_you'][0] if result['likes_you'] else None
@@ -127,26 +112,77 @@ class MongoDB:
             first_name=telegram_user.first_name,
             last_name=telegram_user.last_name,
             username=telegram_user.username,
+            telegram_photo=telegram_user_info.photo
         ).model_dump()
 
-        user = await self.db.users.find_one({"user_id": telegram_user.id})
+        await self.db.users.update_one(
+            {
+                "user_id": telegram_user.id
+            },
+            [{
+                "$set": {
+                    "updated_at": datetime.datetime.now(),
+                    "created_at": {
+                        "$cond": [
+                            {"$ne": ['$created_at', None]},
+                            datetime.datetime.now(),
+                            "$created_at"
+                        ]
+                    },
+                    "about": {
+                        "$cond": [
+                            {"$ne": ['$about', None]},
+                            telegram_user_info.about,
+                            "$about"
+                        ]
+                    },
+                    **_user,
+                }
+            }], upsert=True)
 
-        if user:
-            # User already exists
-            await self.db.users.update_one({"user_id": telegram_user.id},
-                                           {"$set": {"updated_at": datetime.datetime.now(), **_user}}, upsert=True)
-        else:
-            # User doesn't exist
-            await self.db.users.insert_one(
-                {"created_at": datetime.datetime.now(), "updated_at": datetime.datetime.now(),
-                 "about": telegram_user_info.about, **_user})
+        # await self.db.users.update_one(
+        #     {
+        #         "user_id": telegram_user.id
+        #     },
+        #     {
+        #         "$setOnInsert": {
+        #             "created_at": datetime.datetime.now(),
+        #         },
+        #         "$set": {
+        #             "updated_at": datetime.datetime.now(),
+        #             "telegram_photo": {
+        #                 "$cond": [
+        #                     {"$ne": [
+        #                         "$telegram_photo",
+        #                         None
+        #                     ]},
+        #                     telegram_user_info.photo,
+        #                     "$telegram_photo"
+        #                 ]
+        #             },
+        #             "about": {
+        #                 "$cond": [
+        #                     {"$ne": [
+        #                         "$about",
+        #                         None
+        #                     ]},
+        #                     telegram_user_info.about,
+        #                     "$about"
+        #                 ]
+        #             },
+        #             **_user
+        #         }
+        #     }, upsert=True)
+
+        print('telegram_user.start_param', telegram_user.start_param)
 
         # Check if hub exists
         hub = await self.db.hubs.find_one(
             {"hub_id": int(telegram_user.start_param)}) if telegram_user.start_param else None
 
         if hub:
-            hub_x_user = await self.db.hub_x_user.find_one({"hub_id": telegram_user.start_param})
+            hub_x_user = await self.db.hub_x_user.find_one(
+                {"hub_id": int(telegram_user.start_param), "user_id": telegram_user.id})
 
             # If hub_x_user document doesn't exist create the one.
             if not hub_x_user:
@@ -156,14 +192,6 @@ class MongoDB:
                         user_id=telegram_user.id,
                         created_at=datetime.datetime.now()
                     ).model_dump())
-
-        # If user's about is empty
-        if not user.get('about'):
-            await self.db.users.update_one(
-                {"user_id": telegram_user.id},
-                {"$set": {"about": telegram_user_info.about, "updated_at": datetime.datetime.now(),
-                          **_user}},
-                upsert=True)
 
         result = await self.db.users.find_one({"user_id": telegram_user.id})
 
@@ -220,18 +248,20 @@ class MongoDB:
         Returns:
             Hub: The Hub object.
         """
-        
-        query = {"user_id": user_id}
 
-        if hub_id:
-            query["hub_id"] = hub_id
-
-        hub_x_user = await self.db.hub_x_user.find_one(query)
+        hub_x_user = await self.db.hub_x_user.find_one({"user_id": user_id, "hub_id": hub_id})
 
         if hub_x_user:
             _hub = await self.db.hubs.find_one({"hub_id": hub_x_user['hub_id']})
 
             return Hub(**_hub)
+        else:
+            hub_x_user = await self.db.hub_x_user.find_one({"user_id": user_id})
+
+            if hub_x_user:
+                _hub = await self.db.hubs.find_one({"hub_id": hub_x_user['hub_id']})
+
+                return Hub(**_hub)
 
         return None
 

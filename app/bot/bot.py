@@ -1,4 +1,5 @@
 import os
+import urllib.request
 
 from aiogram import Bot
 from dotenv import load_dotenv
@@ -15,18 +16,34 @@ class TelegramBot:
 
     def __init__(self, token: str, parse_mode: str = "html") -> None:
         """Initializes a MongoDB connection using AsyncIOMotorClient."""
-        self.bot = Bot(token=token, parse_mode=parse_mode)
+        self.token = token
+        self.bot = Bot(token=self.token, parse_mode=parse_mode)
 
     async def load_user_info(self, user_id: str) -> TelegramUserInfo:
-        """Load telegram user's info.
+        """Loads telegram user's bio and photo. Downloads image.
 
         Args:
-            user (TelegramUser): The user data.
+            user_id: Telegram user id.
+
+        Returns:
+            TelegramUserInfo: Telegram user info object.
         """
 
         user = await self.bot.get_chat(user_id)
+        file_name = None
 
-        return TelegramUserInfo(about=user.bio, photo=None)
+        if user.photo:
+            file_id = user.photo.big_file_id
+
+            file = await self.bot.get_file(file_id)
+
+            file_path = f'https://api.telegram.org/file/bot{self.token}/{file.file_path}'
+
+            file_name = f'{user_id}.jpg'
+
+            urllib.request.urlretrieve(file_path, f"./../f/images/{file_name}")
+
+        return TelegramUserInfo(about=user.bio, photo=str(user_id) if file_name else None)
 
 
 bot = TelegramBot(token=BOT_TOKEN, parse_mode='html')
