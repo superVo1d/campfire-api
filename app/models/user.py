@@ -12,6 +12,7 @@ class User(BaseModel):
     last_name: Optional[str] = None
     username: str
     telegram_photo: Optional[str] = None
+    about: Optional[str] = None
 
 
 class UserCurrent(User):
@@ -21,6 +22,10 @@ class UserCurrent(User):
 class UserWithLikes(User):
     like: Optional[bool] = None
     likesYou: Optional[bool] = None
+
+
+class UserUpdate(BaseModel):
+    about: Optional[str] = None
 
 
 class UserResponse(BaseModel):

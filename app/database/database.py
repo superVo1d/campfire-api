@@ -8,7 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from app.models.hub_x_user import HubXUser
 from app.models.hubs import Hub
 from app.models.matches import Matches
-from app.models.user import User, TelegramUser, UserWithLikes, TelegramUserInfo
+from app.models.user import User, TelegramUser, UserWithLikes, TelegramUserInfo, UserUpdate
 
 load_dotenv()
 
@@ -77,7 +77,6 @@ class MongoDB:
         ]
 
         async for result in self.db.hub_x_user.aggregate(pipeline):
-            print(result['like'])
             _user = result['user']
             like = result['like'][0] if result['like'] else None
             likes_you = result['likes_you'][0] if result['likes_you'] else None
@@ -89,7 +88,8 @@ class MongoDB:
                 username=_user['username'],
                 telegram_photo=_user['telegram_photo'],
                 like=bool(like),
-                likesYou=bool(likes_you)
+                likesYou=bool(likes_you),
+                about=_user['about']
             ))
 
         return users
@@ -112,7 +112,8 @@ class MongoDB:
             first_name=telegram_user.first_name,
             last_name=telegram_user.last_name,
             username=telegram_user.username,
-            telegram_photo=telegram_user_info.photo
+            telegram_photo=telegram_user_info.photo,
+            about=telegram_user_info.about
         ).model_dump()
 
         await self.db.users.update_one(
@@ -121,60 +122,24 @@ class MongoDB:
             },
             [{
                 "$set": {
+                    **_user,
                     "updated_at": datetime.datetime.now(),
                     "created_at": {
                         "$cond": [
                             {"$ne": ['$created_at', None]},
+                            "$created_at",
                             datetime.datetime.now(),
-                            "$created_at"
                         ]
                     },
                     "about": {
                         "$cond": [
                             {"$ne": ['$about', None]},
+                            "$about",
                             telegram_user_info.about,
-                            "$about"
                         ]
-                    },
-                    **_user,
+                    }
                 }
             }], upsert=True)
-
-        # await self.db.users.update_one(
-        #     {
-        #         "user_id": telegram_user.id
-        #     },
-        #     {
-        #         "$setOnInsert": {
-        #             "created_at": datetime.datetime.now(),
-        #         },
-        #         "$set": {
-        #             "updated_at": datetime.datetime.now(),
-        #             "telegram_photo": {
-        #                 "$cond": [
-        #                     {"$ne": [
-        #                         "$telegram_photo",
-        #                         None
-        #                     ]},
-        #                     telegram_user_info.photo,
-        #                     "$telegram_photo"
-        #                 ]
-        #             },
-        #             "about": {
-        #                 "$cond": [
-        #                     {"$ne": [
-        #                         "$about",
-        #                         None
-        #                     ]},
-        #                     telegram_user_info.about,
-        #                     "$about"
-        #                 ]
-        #             },
-        #             **_user
-        #         }
-        #     }, upsert=True)
-
-        print('telegram_user.start_param', telegram_user.start_param)
 
         # Check if hub exists
         hub = await self.db.hubs.find_one(
@@ -264,6 +229,30 @@ class MongoDB:
                 return Hub(**_hub)
 
         return None
+
+    async def update_user(self, user_id: int, values: UserUpdate) -> Union[User, None]:
+        """Updates the user.
+
+        Args:
+            user_id: The user telegram id.
+
+        Returns:
+            User: The User object.
+        """
+
+        await self.db.users.update_one(
+            {"user_id": user_id},
+            [{
+                "$set": {
+                    **values.model_dump(),
+                    "updated_at": datetime.datetime.now()
+                }
+            }]
+        )
+
+        _user = await self.db.users.find_one({"user_id": user_id})
+
+        return User(**_user)
 
 
 database = MongoDB(uri=os.getenv('MONGODB_URI'), database=os.getenv('DATABASE_NAME'))
