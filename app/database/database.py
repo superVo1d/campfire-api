@@ -124,18 +124,19 @@ class MongoDB:
                 "$set": {
                     **_user,
                     "updated_at": datetime.datetime.now(),
-                    "created_at": {
-                        "$cond": [
-                            {"$ne": ['$created_at', None]},
-                            "$created_at",
-                            datetime.datetime.now(),
-                        ]
-                    },
+                    "created_at":
+                        {
+                            "$cond": [
+                                {"$eq": ["$created_at", None]},
+                                "$created_at",
+                                datetime.datetime.now(),
+                            ]
+                        },
                     "about": {
                         "$cond": [
-                            {"$ne": ['$about', None]},
+                            {"$eq": ["$about", None]},
                             "$about",
-                            telegram_user_info.about,
+                            telegram_user_info.about or None,
                         ]
                     }
                 }
