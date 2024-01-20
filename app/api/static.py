@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+import os
+
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 router = APIRouter()
@@ -6,4 +8,9 @@ router = APIRouter()
 
 @router.get("/images/{filename}")
 def serve_static_files(filename: str):
-    return FileResponse(f"./../f/images/{filename}")
+    path = f"./../f/images/{filename}"
+
+    if not os.path.isfile(path):
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    return FileResponse(path)

@@ -30,18 +30,19 @@ class TelegramBot:
         """
 
         user = await self.bot.get_chat(user_id)
-        file_name = None
+        file_name = f'{user_id}.jpg'
 
         if user.photo:
             file_id = user.photo.big_file_id
 
-            file = await self.bot.get_file(file_id)
+            try:
+                file = await self.bot.get_file(file_id)
 
-            file_path = f'https://api.telegram.org/file/bot{self.token}/{file.file_path}'
+                file_path = f'https://api.telegram.org/file/bot{self.token}/{file.file_path}'
 
-            file_name = f'{user_id}.jpg'
-
-            urllib.request.urlretrieve(file_path, f"./../f/images/{file_name}")
+                urllib.request.urlretrieve(file_path, f"./../f/images/{file_name}")
+            except:
+                pass
 
         return TelegramUserInfo(about=user.bio, photo=str(user_id) if file_name else None)
 
