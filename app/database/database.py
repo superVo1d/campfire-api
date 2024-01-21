@@ -126,6 +126,7 @@ class MongoDB:
             [{
                 "$set": {
                     **_user,
+                    "age": "$age",
                     "updated_at": datetime.datetime.now(),
                     "created_at":
                         {
@@ -256,8 +257,8 @@ class MongoDB:
             {"user_id": user_id},
             [{
                 "$set": {
-                    "about": sanitize_input(values.about)[:500],
-                    "age": values.age,
+                    "about": values.about[:500],
+                    "age": values.age if values.age != "" else None,
                     "working_name": sanitize_input(values.name)[:20],
                     "updated_at": datetime.datetime.now()
                 }

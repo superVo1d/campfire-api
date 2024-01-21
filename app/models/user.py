@@ -28,7 +28,7 @@ class UserWithLikes(User):
 
 class UserUpdate(BaseModel):
     about: Optional[str] = None
-    age: Optional[int] = None
+    age: Optional[Union[int, str]] = None
     name: Optional[str] = None
 
 
