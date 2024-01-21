@@ -138,14 +138,14 @@ class MongoDB:
                         },
                     "about": {
                         "$cond": [
-                            {"$eq": ["$about", None]},
+                            {"$not": "$about"},
                             telegram_user_info.about or None,
                             "$about",
                         ]
                     },
                     "working_name": {
                         "$cond": [
-                            {"$eq": ["working_name", None]},
+                            {"$not": "$working_name"},
                             _user['working_name'],
                             "$working_name",
                         ]
