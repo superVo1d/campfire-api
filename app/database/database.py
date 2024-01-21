@@ -126,7 +126,6 @@ class MongoDB:
             [{
                 "$set": {
                     **_user,
-                    "age": "$age",
                     "updated_at": datetime.datetime.now(),
                     "created_at":
                         {
@@ -206,13 +205,14 @@ class MongoDB:
 
         if like:
             await self.db.matches.delete_many({'first_user_id': first_user_id, 'second_user_id': second_user_id})
+
+            return False
         else:
             await self.db.matches.insert_one(
                 Matches(first_user_id=first_user_id, second_user_id=second_user_id,
                         created_at=datetime.datetime.now()).model_dump())
 
-        mutual_like = await self.db.matches.find_one(
-            {'$or': [{'first_user_id': second_user_id}, {'second_user_id': first_user_id}]})
+        mutual_like = await self.db.matches.find_one({'first_user_id': second_user_id, 'second_user_id': first_user_id})
 
         return bool(mutual_like)
 

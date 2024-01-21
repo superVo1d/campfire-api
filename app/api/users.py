@@ -22,7 +22,7 @@ async def get_users(_user: Annotated[UserCurrent, Depends(get_current_user)]):
         users.append(UsersResponseItem(
             id=user.user_id,
             about=user.about,
-            age=None,
+            age=user.age,
             firstName=user.first_name,
             lastName=user.last_name,
             like=user.like,
