@@ -1,3 +1,4 @@
+import html
 import os
 from typing import Annotated
 
@@ -42,3 +43,8 @@ def get_telegram_user(
         auth_cred: Annotated[HTTPAuthorizationCredentials, Depends(telegram_authentication_schema)]
 ) -> TelegramUser:
     return verify_token(auth_cred)
+
+
+def sanitize_input(input_str):
+    sanitized_str = html.escape(input_str)
+    return sanitized_str

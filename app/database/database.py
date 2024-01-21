@@ -9,6 +9,7 @@ from app.models.hub_x_user import HubXUser
 from app.models.hubs import Hub
 from app.models.matches import Matches
 from app.models.user import User, TelegramUser, UserWithLikes, TelegramUserInfo, UserUpdate
+from app.utils.utils import sanitize_input
 
 load_dotenv()
 
@@ -89,7 +90,8 @@ class MongoDB:
                 telegram_photo=_user['telegram_photo'],
                 like=bool(like),
                 likesYou=bool(likes_you),
-                about=_user['about']
+                about=_user.get('about'),
+                working_name=_user['working_name']
             ))
 
         return users
@@ -111,6 +113,7 @@ class MongoDB:
             user_id=telegram_user.id,
             first_name=telegram_user.first_name,
             last_name=telegram_user.last_name,
+            working_name=telegram_user.first_name + (f' {telegram_user.last_name}' if telegram_user.last_name else ''),
             username=telegram_user.username,
             telegram_photo=telegram_user_info.photo,
             about=telegram_user_info.about
@@ -123,6 +126,7 @@ class MongoDB:
             [{
                 "$set": {
                     **_user,
+                    "age": "$age",
                     "updated_at": datetime.datetime.now(),
                     "created_at":
                         {
@@ -135,8 +139,15 @@ class MongoDB:
                     "about": {
                         "$cond": [
                             {"$eq": ["$about", None]},
-                            "$about",
                             telegram_user_info.about or None,
+                            "$about",
+                        ]
+                    },
+                    "working_name": {
+                        "$cond": [
+                            {"$eq": ["working_name", None]},
+                            _user['working_name'],
+                            "$working_name",
                         ]
                     }
                 }
@@ -245,7 +256,9 @@ class MongoDB:
             {"user_id": user_id},
             [{
                 "$set": {
-                    **values.model_dump(),
+                    "about": sanitize_input(values.about)[:500],
+                    "age": values.age,
+                    "working_name": sanitize_input(values.name)[:20],
                     "updated_at": datetime.datetime.now()
                 }
             }]

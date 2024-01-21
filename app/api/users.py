@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends
 
 from app.api.auth import get_current_user
 from app.database.database import database
-from app.mocks.text_mock import text_mock
 from app.models.user import UsersResponse, UsersResponseItem, UserCurrent
 
 router = APIRouter()
@@ -22,14 +21,15 @@ async def get_users(_user: Annotated[UserCurrent, Depends(get_current_user)]):
 
         users.append(UsersResponseItem(
             id=user.user_id,
-            about=user.about if user.about else text_mock,
+            about=user.about,
             age=None,
             firstName=user.first_name,
             lastName=user.last_name,
-            photo=f'api/static/images/{user.telegram_photo}.jpg' if user.telegram_photo else None,
-            nickname=user.username,
             like=user.like,
-            likesYou=user.likesYou
+            likesYou=user.likesYou,
+            nickname=user.username,
+            photo=f'api/static/images/{user.telegram_photo}.jpg' if user.telegram_photo else None,
+            workingName=user.working_name
         ))
 
     return users

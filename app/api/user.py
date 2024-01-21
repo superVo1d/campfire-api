@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends
 from app.api.auth import get_current_user
 from app.bot.bot import bot
 from app.database.database import database
-from app.mocks.text_mock import text_mock
 from app.models.hubs import HubResponse
 from app.models.user import UserCurrent, UserResponse, UserUpdate
 
@@ -20,10 +19,11 @@ async def get_user(user: Annotated[UserCurrent, Depends(get_current_user)]):
 
     return UserResponse(
         id=user.user_id,
-        about=user.about if user.about else text_mock,
-        age=None,
+        about=user.about,
+        age=user.age,
         firstName=user.first_name,
         lastName=user.last_name,
+        workingName=user.working_name,
         photo=f'api/static/images/{telegram_user_info.photo}.jpg' if telegram_user_info.photo else None,
         hub=HubResponse(hubId=hub.hub_id, hubName=hub.hub_nm) if hub else None,
         nickname=user.username
@@ -40,10 +40,11 @@ async def update_user(user: Annotated[UserCurrent, Depends(get_current_user)], v
 
     return UserResponse(
         id=_user.user_id,
-        about=_user.about if _user.about else text_mock,
-        age=None,
+        about=_user.about,
+        age=_user.age,
         firstName=_user.first_name,
         lastName=_user.last_name,
+        workingName=_user.working_name,
         photo=f'api/static/images/{telegram_user_info.photo}.jpg' if telegram_user_info.photo else None,
         hub=HubResponse(hubId=hub.hub_id, hubName=hub.hub_nm) if hub else None,
         nickname=_user.username

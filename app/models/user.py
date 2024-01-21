@@ -13,6 +13,8 @@ class User(BaseModel):
     username: str
     telegram_photo: Optional[str] = None
     about: Optional[str] = None
+    age: Optional[int] = None
+    working_name: Optional[str] = None
 
 
 class UserCurrent(User):
@@ -26,6 +28,8 @@ class UserWithLikes(User):
 
 class UserUpdate(BaseModel):
     about: Optional[str] = None
+    age: Optional[int] = None
+    name: Optional[str] = None
 
 
 class UserResponse(BaseModel):
@@ -34,6 +38,7 @@ class UserResponse(BaseModel):
     age: Optional[int] = None
     firstName: str
     lastName: Optional[str] = None
+    workingName: str
     photo: Optional[str] = None
     hub: Optional[HubResponse] = None
     nickname: str
@@ -68,6 +73,7 @@ class UsersResponseItem(BaseModel):
     nickname: str
     like: Optional[bool] = None
     likesYou: Optional[bool] = None
+    workingName: str
 
 
 class UsersResponse(RootModel):
