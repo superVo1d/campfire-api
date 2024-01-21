@@ -91,7 +91,8 @@ class MongoDB:
                 like=bool(like),
                 likesYou=bool(likes_you),
                 about=_user.get('about'),
-                working_name=_user['working_name']
+                working_name=_user['working_name'],
+                age=_user.get('age')
             ))
 
         return users
