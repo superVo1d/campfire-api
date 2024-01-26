@@ -40,9 +40,8 @@ class TelegramBot:
 
                 file_path = f'https://api.telegram.org/file/bot{self.token}/{file.file_path}'
 
-                if not os.path.isfile(f"./../f/images/{file_name}"):
-                    urllib.request.urlretrieve(file_path, f"./../f/images/{file_name}")
-                    os.chmod(file_path, 0o777)
+                urllib.request.urlretrieve(file_path, f"./../f/images/{file_name}")
+                os.chmod(file_path, 0o777)
             except:
                 pass
 
