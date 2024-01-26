@@ -3,7 +3,9 @@ from starlette.middleware.cors import CORSMiddleware
 
 from .api import user, users, auth, like, static
 
-app = FastAPI()
+app = FastAPI(
+    redoc_url='/api/docs'
+)
 
 origins = [
     "http://localhost:4200",
